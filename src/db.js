@@ -8,6 +8,7 @@ db.exec(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         phone TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 `);
@@ -20,10 +21,10 @@ const getUsersByPhone = (phone) => {
     return db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
 };
 
-const createUser = (name, phone) => {
-    const insert = db.prepare('INSERT INTO users (name, phone) VALUES (?, ?)');
-    const info = insert.run(name, phone);
-    return { id: info.lastInsertRowidm, name, phone };
+const createUser = (name, phone, password) => {
+    const insert = db.prepare('INSERT INTO users (name, phone, password) VALUES (?, ?, ?)');
+    const info = insert.run(name, phone, password);
+    return { id: info.lastInsertRowidm, name, phone, password };
 };
 
 const deleteUser = (id) => {

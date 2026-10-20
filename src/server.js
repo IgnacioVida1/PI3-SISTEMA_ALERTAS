@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = 'super_secreto_mvp_123';
+
 const { sendFloodAlert } = require('./notifiers');
 
 const app = express();
@@ -55,10 +59,10 @@ app.post('/api/alert', async (req, res) => {
     });
 });
 
-app.post('/api/users', (req, res) => {
-  const { name, phone } = req.body;
-  if (!name || !phone) {
-    return res.status(400).json({ error: 'Se requiere name y phone' });
+app.post('/api/users', async (req, res) => {
+  const { name, phone, password } = req.body;
+  if (!name || !phone || !password) {
+    return res.status(400).json({ error: 'Se requiere name, phone o password' });
   }
 
   const normalized = phone.replace(/[+\s-]/g, '');
@@ -67,13 +71,30 @@ app.post('/api/users', (req, res) => {
     if (existingUser) {
         return res.status(400).json({ error: "Este numero ya esta registrado" });
     }
-    const newUser = db.createUser(name, normalized);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = db.createUser(name, normalized, hashedPassword);
+
     console.log(`👤 Usuario registrado: ${name} (${normalized})`);
     res.status(201).json(newUser);
   } catch (error) {
     console.error('Error al registrar usuario:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
+});
+
+app.post('/api/login', async (req, res) => {
+    const { phone, password } = req.body;
+    const normalized = phone.replace(/[+\s-]/g, '');
+    
+    const user = db.getUserByPhone(normalized);
+    if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) return res.status(401).json({ error: 'Credenciales inválidas' });
+
+    // Generar Token JWT
+    const token = jwt.sign({ id: user.id, name: user.name }, SECRET_KEY, { expiresIn: '2h' });
+    res.json({ token, user: { id: user.id, name: user.name, phone: user.phone } });
 });
 
 app.get('/api/users', (req, res) => {
