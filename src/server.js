@@ -86,7 +86,7 @@ app.post('/api/login', async (req, res) => {
     const { phone, password } = req.body;
     const normalized = phone.replace(/[+\s-]/g, '');
     
-    const user = db.getUserByPhone(normalized);
+    const user = db.getUsersByPhone(normalized);
     if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
 
     const validPassword = await bcrypt.compare(password, user.password);
