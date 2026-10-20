@@ -45,7 +45,7 @@ app.post('/api/alert', async (req, res) => {
 
     result.forEach((r, index) => {
         if (r.status === 'rejected') {
-            console.error(`Error al enviar notificación a ${registeredUsers[index].phone}:`, 
+            console.error(`Error al enviar notificación a ${users[index].phone}:`, 
                 r.reason?.response?.data || r.reason?.message);
         }
     });
