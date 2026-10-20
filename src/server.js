@@ -4,7 +4,9 @@ const db = require('./db');
 const { sendFloodAlert } = require('./notifiers');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*'
+}));
 app.use(express.json());
 
 app.post('/api/alert', async (req, res) => {
