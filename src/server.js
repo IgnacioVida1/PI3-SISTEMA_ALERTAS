@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const db = require('./db');
 const { sendFloodAlert } = require('./notifiers');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.post('/api/alert', async (req, res) => {
