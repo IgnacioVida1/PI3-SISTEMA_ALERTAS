@@ -80,7 +80,7 @@ function simulateFlow() { //NOSONAR
   return { flow: Number.parseFloat(currentFlow.toFixed(2)), status };
 }
 
-setInterval(simulateFlow, 60000);
+setInterval(simulateFlow, 20000);
 simulateFlow();
 
 const app = express(); //NOSONAR
