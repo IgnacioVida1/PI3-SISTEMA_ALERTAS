@@ -50,11 +50,16 @@ const getLastRiverStatus = () => {
     return db.prepare('SELECT * FROM river_status ORDER BY id DESC LIMIT 1').get();
 };
 
+const getRiverHistory = () => {
+    return db.prepare('SELECT * FROM river_status ORDER BY id DESC LIMIT 50').all().reverse();
+};
+
 module.exports = {
     getUsers,
     getUsersByPhone,
     createUser,
     deleteUser,
     saveRiverStatus,
-    getLastRiverStatus
+    getLastRiverStatus,
+    getRiverHistory
 };

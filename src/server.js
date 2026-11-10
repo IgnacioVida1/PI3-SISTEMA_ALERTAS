@@ -62,6 +62,15 @@ app.get('/api/telemetry/latest', (req, res) => {
   res.json({ flow: latest.flow, status: latest.status, updated_at: latest.updated_at });
 });
 
+app.get('/api/telemetry/history', (req, res) => {
+    const history = db.getRiverHistory();
+    res.json(history.map(h => ({
+        time: new Date(h.updated_at + 'Z').toLocaleTimeString(),
+        flow: h.flow,
+        status: h.status
+    })));
+});
+
 app.post('/api/alert', async (req, res) => {
     const body = req.body || {};
     const { alert, level, river, timestamp } = body;
