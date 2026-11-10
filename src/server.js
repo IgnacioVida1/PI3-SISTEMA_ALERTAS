@@ -7,14 +7,45 @@ const SECRET_KEY = 'super_secreto_mvp_123';
 
 const { sendFloodAlert } = require('./notifiers');
 
-let currentFlow = 2;
+let currentFlow = 2.5;
 let alertCooldown = false;
-// Ajustado a los umbrales que mencionaste en tu código
+let weatherState = "Calma";
+let stateDuration = 0;
 const FLOW_THRESHOLDS = { yellow: 15, orange: 20, red: 27 }; 
 
-function simulateFlow() {
-  const step = (Math.random() * 0.8 - 0.3); //NOSONAR
-  currentFlow = Math.max(0.5, Math.min(35, currentFlow + step)); 
+function simulateFlow() { //NOSONAR
+  stateDuration++;
+
+  if (weatherState === "Calma" && Math.random() < 0.05) { //NOSONAR
+    weatherState = "Lluvia";
+    stateDuration = 0;
+  }
+  else if (weatherState === "Lluvia") { 
+    if (Math.random() < 0.1) { //NOSONAR
+      weatherState = "Tormenta";
+      stateDuration = 0;
+    } else if (Math.random() < 0.15 || stateDuration > 10) { //NOSONAR
+      weatherState = "Calma";
+      stateDuration = 0;
+    }
+  }
+  else if (weatherState === "Tormenta") {
+    if (Math.random() < 0.1  || stateDuration > 15) { //NOSONAR
+      weatherState = "Lluvia";
+      stateDuration = 0;
+    }
+  }
+
+  let step = 0;
+  if (weatherState === 'Calma') {
+      step = (Math.random() * 0.4 - 0.25); //NOSONAR
+  } else if (weatherState === 'Lluvia') { 
+      step = (Math.random() * 1.5 - 0.2); //NOSONAR
+  } else if (weatherState === 'Tormenta') {
+      step = (Math.random() * 5.0 + 1.0); //NOSONAR
+  }
+
+  currentFlow = Math.max(0.5, Math.min(35, currentFlow + step));
   
   let status = 'Normal';
   let shouldAlert = false;
@@ -49,7 +80,7 @@ function simulateFlow() {
   return { flow: Number.parseFloat(currentFlow.toFixed(2)), status };
 }
 
-setInterval(simulateFlow, 3000);
+setInterval(simulateFlow, 60000);
 simulateFlow();
 
 const app = express(); //NOSONAR
@@ -69,6 +100,26 @@ app.get('/api/telemetry/history', (req, res) => {
         flow: h.flow,
         status: h.status
     })));
+});
+
+app.post('/api/telemetry/test', (req, res) => {
+    const { state } = req.body;
+    
+    if (!['Calma', 'Lluvia', 'Tormenta'].includes(state)) {
+        return res.status(400).json({ error: 'Estado inválido. Usa Calma, Lluvia o Tormenta.' });
+    }
+
+    weatherState = state;
+    stateDuration = 0;
+    
+    if (state === 'Lluvia' && currentFlow < 10) currentFlow = 10;
+    if (state === 'Tormenta' && currentFlow < 20) currentFlow = 20;
+
+    console.log(`🧪 TEST: Estado forzado manualmente a ${weatherState}`);
+
+    simulateFlow();
+
+    res.json({ message: `Estado cambiado a ${state}`, currentFlow });
 });
 
 app.post('/api/alert', async (req, res) => {
